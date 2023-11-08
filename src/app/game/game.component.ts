@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Game } from 'src/models/game';
 import { MatDialog } from "@angular/material/dialog";
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
+import { Firestore, query, collection, addDoc , onSnapshot, updateDoc } from '@angular/fire/firestore';
+// import { query } from '@angular/animations';
 
 @Component({
   selector: 'app-game',
@@ -10,20 +12,33 @@ import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player
 })
 
 export class GameComponent implements OnInit {
+  fireStore: Firestore = inject(Firestore);
   pickCardAnimation = false;
   currentCard: string = '';
   name!: string;
   game!: Game;
 
-  constructor(public dialog: MatDialog) { }
-
+  constructor(private firestore: Firestore, public dialog: MatDialog) { }
+  //
 
   ngOnInit(): void {
     this.newGame();
+
+    let ref = collection(this.fireStore, 'games');
+    const q = query(ref);
+    onSnapshot(q, (list) => {
+      list.forEach((doc) => {
+        console.log('Update:', doc.data());
+      })
+    })
   }
 
-  newGame() {
+  async newGame() {
     this.game = new Game();
+    let colRef = collection(this.fireStore, 'games');
+    let docRef = await addDoc(colRef, this.game.toJson());
+    // await updateDoc(docRef, this.game.toJson())
+    console.log(docRef.id);
   }
 
   takeCard() {
