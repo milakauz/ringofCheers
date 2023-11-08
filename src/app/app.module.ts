@@ -15,6 +15,10 @@ import {MatInputModule} from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { GameInfoComponent } from './game-info/game-info.component';
 import {MatCardModule} from '@angular/material/card';
+import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { getDatabase, provideDatabase } from '@angular/fire/database';
+import { environment } from "./../environments/environment";
 
 
 @NgModule({
@@ -35,7 +39,10 @@ import {MatCardModule} from '@angular/material/card';
     MatInputModule,
     MatDialogModule,
     MatCardModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    provideFirebaseApp(() => initializeApp({"projectId":"ring-of-cheers","appId":"1:683810670313:web:64dead9fd87fb6be045278","storageBucket":"ring-of-cheers.appspot.com","apiKey":"AIzaSyAT6Li6yGyMrDB5ezjFPY6W7ZaSIQSIhKI","authDomain":"ring-of-cheers.firebaseapp.com","messagingSenderId":"683810670313"})),
+    provideFirestore(() => getFirestore()),
+    provideDatabase(() => getDatabase())
   ],
   providers: [],
   bootstrap: [AppComponent]
