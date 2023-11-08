@@ -1,0 +1,14 @@
+{
+  "targets": {
+    "ring-of-cheers": {
+      "hosting": {
+        "ringoffire": [
+          "ring-of-cheers"
+        ]
+      }
+    }
+  },
+  "projects": {
+    "default": "ring-of-cheers"
+  }
+}
