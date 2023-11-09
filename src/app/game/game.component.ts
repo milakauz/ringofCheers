@@ -2,7 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Game } from 'src/models/game';
 import { MatDialog } from "@angular/material/dialog";
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
-import { Firestore, query, collection, addDoc , onSnapshot, updateDoc } from '@angular/fire/firestore';
+import { Firestore, query, collection, addDoc, onSnapshot, updateDoc, doc, getDoc, getDocs } from '@angular/fire/firestore';
+import { ActivatedRoute } from '@angular/router';
 // import { query } from '@angular/animations';
 
 @Component({
@@ -17,28 +18,36 @@ export class GameComponent implements OnInit {
   currentCard: string = '';
   name!: string;
   game!: Game;
+  gameId!: string;
 
-  constructor(private firestore: Firestore, public dialog: MatDialog) { }
-  //
+  constructor(private firestore: Firestore, public dialog: MatDialog, private route: ActivatedRoute) { }
 
   ngOnInit(): void {
     this.newGame();
+    //subscribing to the Observable (params) of route. Everytime they change this arrow function will be executed
+    this.route.params.subscribe(async (params) => {
+      console.log(params['id']);
 
-    let ref = collection(this.fireStore, 'games');
-    const q = query(ref);
-    onSnapshot(q, (list) => {
-      list.forEach((doc) => {
-        console.log('Update:', doc.data());
-      })
+      // q is a query for for the fireStore collection named games. It should look for 
+      // a doc with the id same as params['id'] - it does not work immediately
+      const q = query(collection(this.fireStore, 'games'), params['id']);
+      const querySnaphot = await getDocs(q);
+      // goes through all receiving documents:
+      querySnaphot.forEach((doc) => {
+        // checkig if document ID is same as ID in url
+        if (doc.id === params['id']) {
+          console.log(doc.data());
+        }
+      });
     })
   }
 
   async newGame() {
     this.game = new Game();
-    let colRef = collection(this.fireStore, 'games');
-    let docRef = await addDoc(colRef, this.game.toJson());
-    // await updateDoc(docRef, this.game.toJson())
-    console.log(docRef.id);
+    // let colRef = collection(this.fireStore, 'games');
+    // let docRef = await addDoc(colRef, this.game.toJson());
+    // // await updateDoc(docRef, this.game.toJson())
+    // console.log(docRef.id);
   }
 
   takeCard() {
