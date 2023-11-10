@@ -35,9 +35,7 @@ export class GameComponent implements OnInit {
 
   setGameId() {
     this.route.params.subscribe((params) => {
-      const parameterID = params['id'];
-      const correctedID = parameterID.slice(1);
-      this.gameId = correctedID;
+      this.gameId = params['id'];;
     })
   }
 
