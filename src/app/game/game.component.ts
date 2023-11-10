@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Game } from 'src/models/game';
 import { MatDialog } from "@angular/material/dialog";
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
-import { Firestore, query, collection, addDoc, onSnapshot, updateDoc, doc, getDoc, getDocs } from '@angular/fire/firestore';
+import { Firestore, query, collection, addDoc, onSnapshot, updateDoc, doc, getDoc, getDocs, deleteDoc } from '@angular/fire/firestore';
 import { ActivatedRoute } from '@angular/router';
 // import { query } from '@angular/animations';
 
@@ -14,57 +14,71 @@ import { ActivatedRoute } from '@angular/router';
 
 export class GameComponent implements OnInit {
   fireStore: Firestore = inject(Firestore);
-  pickCardAnimation = false;
-  currentCard: string = '';
+
   name!: string;
   game!: Game;
   gameId!: string;
+  unsubGames;
 
-  constructor(private firestore: Firestore, public dialog: MatDialog, private route: ActivatedRoute) { }
+  constructor(private firestore: Firestore, public dialog: MatDialog, private route: ActivatedRoute) {
+    this.setGameId();
+    this.unsubGames = this.subGame();
+  }
 
   ngOnInit(): void {
     this.newGame();
-    //subscribing to the Observable (params) of route. Everytime they change this arrow function will be executed
-    this.route.params.subscribe(async (params) => {
-      console.log(params['id']);
+  }
 
-      const unsub = onSnapshot(doc(this.fireStore, 'games', params['id']), (game: any) => {
-        if (game.id === params['id']) {
-          console.log('Update:', game.data());
-          this.game.currentPlayer = game.data().currentPlayer;
-          this.game.playedCards = game.data().playedCards;
-          this.game.players = game.data().players;
-          this.game.stack = game.data().stack;
-          console.log(game.data().players);
-        }
-        
-      })
+  newGame() {
+    this.game = new Game();
+  }
+
+  setGameId() {
+    this.route.params.subscribe((params) => {
+      const parameterID = params['id'];
+      const correctedID = parameterID.slice(1);
+      this.gameId = correctedID;
     })
   }
 
-  async newGame() {
-    this.game = new Game();
-    // console.log(this.game.players[0]);
-    
-    // let colRef = collection(this.fireStore, 'games');
-    // let docRef = await addDoc(colRef, this.game.toJson());
-    // // await updateDoc(docRef, this.game.toJson())
-    // console.log(docRef.id);
+  subGame() {
+    return onSnapshot(doc(this.fireStore, 'games', this.gameId), (game: any) => {
+      console.log('Update:', game.data());
+      this.game.currentPlayer = game.data().currentPlayer;
+      this.game.playedCards = game.data().playedCards;
+      this.game.players = game.data().players;
+      this.game.stack = game.data().stack;
+      this.game.pickCardAnimation = game.data().pickCardAnimation;
+      this.game.currentCard = game.data().currentCard;
+    })
+  }
+
+  async updateGame() {
+    if (this.gameId) {
+      let docRef = doc(collection(this.fireStore, 'games'), this.gameId);
+      await updateDoc(docRef, this.game.toJson()).catch((error) => {
+        console.log(error);
+      })
+    }
+  }
+
+  ngOnDestroy() {
+    this.unsubGames();
   }
 
   takeCard() {
     //only clicking on stack and picking card if boolean is false. It's only possible every 1.5s.
-    if (!this.pickCardAnimation) {
+    if (!this.game.pickCardAnimation) {
       // last value from array will be returned and deleted
-      this.currentCard = this.game.stack.pop()!;
-      this.pickCardAnimation = true;
+      this.game.currentCard = this.game.stack.pop()!;
+      this.game.pickCardAnimation = true;
       this.game.currentPlayer++;
       // current Player should start from beginning after reaching last player. 
       this.game.currentPlayer = this.game.currentPlayer % this.game.players.length;
-
+      this.updateGame();
       setTimeout(() => {
-        this.game.playedCards.push(this.currentCard);
-        this.pickCardAnimation = false;
+        this.game.playedCards.push(this.game.currentCard);
+        this.game.pickCardAnimation = false;
       }, 1000);
     }
   }
@@ -75,6 +89,7 @@ export class GameComponent implements OnInit {
     dialogRef.afterClosed().subscribe((name: string) => {
       if (name && name.length > 0) {
         this.game.players.push(name);
+        this.updateGame();
       }
     });
   }
