@@ -28,22 +28,24 @@ export class GameComponent implements OnInit {
     this.route.params.subscribe(async (params) => {
       console.log(params['id']);
 
-      // q is a query for for the fireStore collection named games. It should look for 
-      // a doc with the id same as params['id'] - it does not work immediately
-      const q = query(collection(this.fireStore, 'games'), params['id']);
-      const querySnaphot = await getDocs(q);
-      // goes through all receiving documents:
-      querySnaphot.forEach((doc) => {
-        // checkig if document ID is same as ID in url
-        if (doc.id === params['id']) {
-          console.log(doc.data());
+      const unsub = onSnapshot(doc(this.fireStore, 'games', params['id']), (game: any) => {
+        if (game.id === params['id']) {
+          console.log('Update:', game.data());
+          this.game.currentPlayer = game.data().currentPlayer;
+          this.game.playedCards = game.data().playedCards;
+          this.game.players = game.data().players;
+          this.game.stack = game.data().stack;
+          console.log(game.data().players);
         }
-      });
+        
+      })
     })
   }
 
   async newGame() {
     this.game = new Game();
+    // console.log(this.game.players[0]);
+    
     // let colRef = collection(this.fireStore, 'games');
     // let docRef = await addDoc(colRef, this.game.toJson());
     // // await updateDoc(docRef, this.game.toJson())
