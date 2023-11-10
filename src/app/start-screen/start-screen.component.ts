@@ -14,6 +14,6 @@ export class StartScreenComponent {
   }
 
   newGame() {
-    this.router.navigateByUrl('/game/:id');
+    this.router.navigateByUrl('/game/:1e2sWei4BXgv7DX2FGAL');
   }
 }
